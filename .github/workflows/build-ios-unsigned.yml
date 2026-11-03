@@ -24,7 +24,8 @@ jobs:
           cache: true
       - name: Resolve original dependencies
         working-directory: simple_live_app
-        run: flutter pub get
+        # Keep the original networking plugin version compatible with this Xcode.
+        run: flutter pub add connectivity_plus:7.0.0
       - name: Build unsigned iPhone app
         working-directory: simple_live_app
         run: flutter build ios --release --no-codesign
@@ -40,6 +41,7 @@ jobs:
           ditto build/ios/iphoneos/Runner.app build/ios/ipa-stage/Payload/Runner.app
           (cd build/ios/ipa-stage && /usr/bin/zip -qry ../artifacts/Simple-Live-1.11.4-unsigned.ipa Payload)
           (cd build/ios/artifacts && shasum -a 256 Simple-Live-1.11.4-unsigned.ipa > SHA256SUMS.txt)
+          cp pubspec.lock build/ios/artifacts/pubspec.lock
           git rev-parse HEAD > build/ios/artifacts/SOURCE_COMMIT.txt
           flutter --version > build/ios/artifacts/FLUTTER_VERSION.txt
           xcodebuild -version > build/ios/artifacts/XCODE_VERSION.txt
