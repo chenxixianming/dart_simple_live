@@ -1,0 +1,52 @@
+name: Build original Simple Live IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/build-ios-unsigned.yml
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out original app source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.3'
+          channel: stable
+          cache: true
+      - name: Resolve original dependencies
+        working-directory: simple_live_app
+        run: flutter pub get
+      - name: Build unsigned iPhone app
+        working-directory: simple_live_app
+        run: flutter build ios --release --no-codesign
+      - name: Package IPA and record source
+        working-directory: simple_live_app
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f build/ios/iphoneos/Runner.app/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' build/ios/iphoneos/Runner.app/Info.plist
+          lipo -verify_arch arm64 build/ios/iphoneos/Runner.app/Runner
+          mkdir -p build/ios/ipa-stage/Payload build/ios/artifacts
+          ditto build/ios/iphoneos/Runner.app build/ios/ipa-stage/Payload/Runner.app
+          (cd build/ios/ipa-stage && /usr/bin/zip -qry ../artifacts/Simple-Live-1.11.4-unsigned.ipa Payload)
+          (cd build/ios/artifacts && shasum -a 256 Simple-Live-1.11.4-unsigned.ipa > SHA256SUMS.txt)
+          git rev-parse HEAD > build/ios/artifacts/SOURCE_COMMIT.txt
+          flutter --version > build/ios/artifacts/FLUTTER_VERSION.txt
+          xcodebuild -version > build/ios/artifacts/XCODE_VERSION.txt
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simple-Live-1.11.4-unsigned-IPA
+          path: simple_live_app/build/ios/artifacts/
+          if-no-files-found: error
+          retention-days: 14
