@@ -24,8 +24,8 @@ jobs:
           cache: true
       - name: Resolve original dependencies
         working-directory: simple_live_app
-        # Keep the original networking plugin version compatible with this Xcode.
-        run: flutter pub add connectivity_plus:7.0.0
+        # Keep the original networking/device plugins compatible with this Xcode.
+        run: flutter pub add connectivity_plus:7.0.0 device_info_plus:12.2.0
       - name: Build unsigned iPhone app
         working-directory: simple_live_app
         run: flutter build ios --release --no-codesign
