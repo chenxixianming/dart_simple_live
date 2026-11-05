@@ -13,6 +13,10 @@ import 'package:media_kit/media_kit.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simple_live_app/app/app_style.dart';
+import 'package:simple_live_app/app/sites.dart';
+import 'package:simple_live_app/routes/app_navigation.dart';
+import 'package:simple_live_app/modules/live_room/live_room_controller.dart';
+import 'package:simple_live_app/services/room_link_service.dart';
 import 'package:simple_live_app/app/controller/app_settings_controller.dart';
 import 'package:simple_live_app/app/log.dart';
 import 'package:simple_live_app/app/utils.dart';
@@ -38,6 +42,22 @@ import 'package:dynamic_color/dynamic_color.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final roomLinks = Platform.isIOS
+      ? RoomLinkService((link) {
+          final site = Sites.allSites[link.site];
+          if (site == null) return;
+          if (Get.isRegistered<LiveRoomController>()) {
+            Get.until((route) =>
+                route.settings.name?.split('?').first ==
+                    RoutePath.kLiveRoomDetail ||
+                route.isFirst);
+            Get.find<LiveRoomController>().resetRoom(site, link.room);
+          } else {
+            AppNavigator.toLiveRoomDetail(site: site, roomId: link.room);
+          }
+        })
+      : null;
+  roomLinks?.start();
   await migrateData();
   await initWindow();
   MediaKit.ensureInitialized();
@@ -57,6 +77,7 @@ void main() async {
   );
   SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
   runApp(const MyApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) => roomLinks?.markReady());
 }
 
 /// 将Hive数据迁移到Application Support

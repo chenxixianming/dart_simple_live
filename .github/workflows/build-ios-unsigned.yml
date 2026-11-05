@@ -5,6 +5,8 @@ on:
     branches: [master]
     paths:
       - .github/workflows/build-ios-unsigned.yml
+      - simple_live_app/**
+      - simple_live_core/**
 permissions:
   contents: read
 jobs:
@@ -28,7 +30,7 @@ jobs:
         run: flutter pub add connectivity_plus:7.0.0 device_info_plus:12.2.0
       - name: Build unsigned iPhone app
         working-directory: simple_live_app
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --build-number 11105
       - name: Package IPA and record source
         working-directory: simple_live_app
         shell: bash
@@ -39,8 +41,8 @@ jobs:
           lipo build/ios/iphoneos/Runner.app/Runner -verify_arch arm64
           mkdir -p build/ios/ipa-stage/Payload build/ios/artifacts
           ditto build/ios/iphoneos/Runner.app build/ios/ipa-stage/Payload/Runner.app
-          (cd build/ios/ipa-stage && /usr/bin/zip -qry ../artifacts/Simple-Live-1.11.4-unsigned.ipa Payload)
-          (cd build/ios/artifacts && shasum -a 256 Simple-Live-1.11.4-unsigned.ipa > SHA256SUMS.txt)
+          (cd build/ios/ipa-stage && /usr/bin/zip -qry ../artifacts/Simple-Live-1.11.4-livecontainer-unsigned.ipa Payload)
+          (cd build/ios/artifacts && shasum -a 256 Simple-Live-1.11.4-livecontainer-unsigned.ipa > SHA256SUMS.txt)
           cp pubspec.lock build/ios/artifacts/pubspec.lock
           git rev-parse HEAD > build/ios/artifacts/SOURCE_COMMIT.txt
           flutter --version > build/ios/artifacts/FLUTTER_VERSION.txt
@@ -48,7 +50,7 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Simple-Live-1.11.4-unsigned-IPA
+          name: Simple-Live-1.11.4-LiveContainer-IPA
           path: simple_live_app/build/ios/artifacts/
           if-no-files-found: error
           retention-days: 14
