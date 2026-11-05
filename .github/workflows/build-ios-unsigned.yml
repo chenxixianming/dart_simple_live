@@ -36,7 +36,7 @@ jobs:
           set -euo pipefail
           test -f build/ios/iphoneos/Runner.app/Info.plist
           /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' build/ios/iphoneos/Runner.app/Info.plist
-          lipo -verify_arch arm64 build/ios/iphoneos/Runner.app/Runner
+          lipo build/ios/iphoneos/Runner.app/Runner -verify_arch arm64
           mkdir -p build/ios/ipa-stage/Payload build/ios/artifacts
           ditto build/ios/iphoneos/Runner.app build/ios/ipa-stage/Payload/Runner.app
           (cd build/ios/ipa-stage && /usr/bin/zip -qry ../artifacts/Simple-Live-1.11.4-unsigned.ipa Payload)
